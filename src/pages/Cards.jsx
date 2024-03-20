@@ -4,48 +4,86 @@ import Header from "../components/Header"
 import axios from 'axios';
 import Card from "../components/Card";
 import { text } from "@fortawesome/fontawesome-svg-core";
+import { useDispatch, useSelector } from "react-redux";
+import authActions from "../redux/actions/auth.actions"
+import authReducer from "../redux/reducers/auth.reducer"
+import Swal from "sweetalert2";
 
 const Cards = () => {
 
-    const [cardsClient, setCards] = useState([])
+    const user = useSelector((store) => store.authReducer.user)
+    const userCards = user.cards
     const [isActive, setActive] = useState()
     const [textLegendType, setTextLegendType] = useState("")
     const [textLegendColor, setTextLegendColor] = useState("")
+    const [card, setCard] = useState({cardColor: "", cardType: ""})
+    const [textColorAndType, setColorAndType] = useState("")
+    const current = authActions.current
+    const login = authActions.login
+    const dispatch = useDispatch()
 
 
     useEffect(() => {
-        axios("http://localhost:8080/api/clients/1")
-        .then(a => {
-            setCards(a.data.cards)})
+        if(!user.logged && localStorage.getItem('token')){
+            axios.get("/api/clients/current", {
+                headers:{
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(res => {
+                dispatch(current(res.data))
+                dispatch(login(localStorage.getItem('token')))
+            })
+        }
     }, []
     )
+
+    function handleChange(e){
+        setCard({...card, [e.target.name]: e.target.value.toUpperCase()})
+    }
+
 
 
 
     function submitCard(e){
         e.preventDefault();
-        let card = {cardColor: "", cardType: ""}
-        if(selectType.value == ""){
+        if(cardType.value == ""){
             setTextLegendType("You have to choose a type of card")
+            setColorAndType("")
         }else{
             setTextLegendType("")
         }
 
-        if(selectColor.value == ""){
+        if(cardColor.value == ""){
             setTextLegendColor("You have to choose a color of card")
+            setColorAndType("")
         }else{
             setTextLegendColor("")
         }
         
 
-        if (selectType.value != "" && selectColor.value != ""){
-            card.cardType = selectType.value.toUpperCase()
-            card.cardColor = selectColor.value.toUpperCase()
-            alert("Card request is completed")
-            console.log(card)
-            selectType.value = ""
-            selectColor.value = ""
-            //axios.post("http://localhost:8080/api/clients/1", {card})
+
+        if (cardType.value != "" && cardColor.value != ""){
+            
+            axios.post("/api/clients/current/cards", 
+            {cardColor: card.cardColor, cardType: card.cardType},
+            {headers:{
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }}
+            )
+            .then(res => {
+                console.log(res.data)
+                Swal.fire({
+                    icon: "success",
+                    title: "Card requested successfully!",
+                  }).then(() => window.location.reload());
+            })
+            .catch(err => {
+                console.log(err.response)
+                if(err.response.data.includes("You already have one card with")){
+                    setColorAndType(err.response.data)
+                }
+            })
         }
     }
 
@@ -53,23 +91,26 @@ const Cards = () => {
     return (
         <>
         <Header/>
-        <img src="/src/images/banner_cards.jpg" className="object-contain w-full lg:h-[400px] lg:object-fill"></img>
+        <img src="/banner_cards.jpg" className="object-contain w-full lg:h-[400px] lg:object-fill"></img>
         <main className="min-h-screen bg-blue-100 flex flex-col gap-y-2 items-center">
-        {cardsClient.length > 0 ?
+        {userCards?.length > 0 ?
         <h1 className="text-3xl font-bold text-center pt-4">YOUR CARDS: </h1> :
         <h1 className="text-3xl font-bold text-center pt-4 mt-4">YOU DON'T HAVE CARDS</h1> }
-        <div className="flex flex-col lg:flex-row lg:gap-x-10 mb-10">
-            {cardsClient.map(a => {
+        <div className="flex flex-col lg:flex-row lg:gap-x-10 lg:flex-wrap mb-10 lg:justify-center lg:w-4/5">
+            {userCards?.map(a => {
                     return <Card key={a.id} number={a.number.replaceAll("-", " ")} cardType={a.cardType} cardColor={a.cardColor} nameClient={a.nameClient.toUpperCase()} trhuDate={a.trhuDate.slice(5,7) + "/" + a.trhuDate.slice(2,4)} fromDate={a.fromDate.slice(5,7) + "/" + a.fromDate.slice(2,4)} 
                     cvv={a.cvv} />
             })}
         </div>
         
-        <h1 className="text-3xl font-bold text-center">REQUEST A CARD:</h1>
-        <form className="h-[250px] w-3/4 bg-blue-200 mb-4 flex flex-col gap-y-2 items-center md:w-1/2 lg:w-1/5 border-2 border-blue-500 shadow-md shadow-blue-300 rounded mt-10">
+            <form className="pt-4 h-[500px] w-11/12 bg-blue-200 mb-4 mt-4 flex flex-col items-center md:h-[550px] md:w-2/3 lg:w-2/5 border-2 border-blue-500 shadow-xl shadow-blue-300 rounded gap-y-2 ">
+                    <div className="flex items-center flex-col">
+                        <img src="/logo2.jpg" className="h-[150px] w-[150px] md:h-[200px] md:w-[200px] ml-5"></img>
+                        <h1 className="text-2xl font-extrabold text-blue-800 md:text-3xl lg:text-4xl">REQUEST CARD</h1>
+                    </div>
                 <div className="flex flex-col items-center mt-4 w-full">
                     <label className="font-bold">TYPE OF CARD:</label>
-                    <select className="w-3/4 text-center" id="selectType">
+                    <select className="w-3/4 text-center h-[40px] border-2 border-blue-500 rounded" id="cardType" onChange={handleChange} name="cardType">
                         <option value="">Select an option</option>
                         <option value="debit">DEBIT</option>
                         <option value="credit">CREDIT</option>
@@ -79,7 +120,7 @@ const Cards = () => {
 
                 <div className="flex flex-col items-center mt-4 w-full">
                     <label className="font-bold">COLOR OF CARD:</label>
-                    <select className="w-3/4 text-center" id="selectColor">
+                    <select className="w-3/4 text-center h-[40px] border-2 border-blue-500 rounded" id="cardColor" onChange={handleChange} name="cardColor">
                         <option value="">Select an option</option>
                         <option value="gold">GOLD</option>
                         <option value="silver">SILVER</option>
@@ -88,8 +129,11 @@ const Cards = () => {
                     <legend className="text-red-500 italic" id="legendType">{textLegendColor}</legend>
                 </div>
 
+                <div className="flex flex-col items-center mt-4 w-full">
+                    <button type="submit" className="bg-green-600 w-[200px] h-[40px] rounded text-xl font-bold text-white p-1 hover:bg-green-500" onClick={submitCard}>REQUEST CARD</button>
+                    <legend className="text-red-500 italic text-center" id="legendType">{textColorAndType}</legend>
+                </div>
 
-                <button type="submit" className="bg-green-600 w-[200px] h-[40px] rounded text-xl font-bold text-white p-1 hover:bg-green-500" onClick={submitCard}>REQUEST CARD</button>
             </form>
 
         </main>
