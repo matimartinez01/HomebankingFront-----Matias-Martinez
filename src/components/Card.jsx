@@ -3,7 +3,7 @@ import PropTypes from "prop-types"
 
 const Card = (props) => {
     return(
-        <div className="mt-10 w-[312px] h-[200px] flex flex-col rounded" style={{background: `url(/src/images/${props.cardColor}.jpg)`, backgroundSize: "contain"}}>
+        <div className="mt-10 w-[312px] h-[200px] flex flex-col rounded" style={{background: `url(/${props.cardColor}.jpg)`, backgroundSize: "contain"}}>
         <p className="text-xl font-bold text-gray-500 left-[240px] top-[5px] relative w-[70px]">{props.cardType}</p>
         <p className="relative top-[65px] left-[50px] text-xl font-bold text-gray-500 w-[210px]">{props.number}</p>
             <p className="relative top-[70px] font-bold text-gray-500 left-[20px] w-[150px]">{props.nameClient}</p>

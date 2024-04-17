@@ -5,7 +5,7 @@ const Account = (props) => {
 
     return(
         <div className="border-2 border-blue-500 shadow-md shadow-blue-300 rounded text-xl flex flex-col gap-y-6 p-4 pl-6 bg-white h-[280px] w-[350px] md:w-[420px]">
-            <p><span className="font-bold">Account number: </span> {props.number}</p>
+            <p className="text-2xl font-bold text-center text-blue-800 md:text-3xl lg:text-4xl">{props.number}</p>
             <p><span className="font-bold">Creation date: </span>{props.date}</p>
             <div>
                 <p><span className="font-bold">Mount: </span> </p>
